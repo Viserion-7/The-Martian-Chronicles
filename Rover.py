@@ -3,9 +3,10 @@ import requests
 import shutil
 from PyQt5 import QtCore, QtWidgets, QtGui
 import ezgmail
+import os
 
 apitoken="cGgrQ050dAIbAd2T19ysIRWzvLumwMvcmoCt2w82"
-
+os.makedirs('img',exist_ok=True)
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
@@ -18,46 +19,53 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setMinimumSize(1,1)
         
         font = QtGui.QFont()
-        font.setPointSize(15)
+        font.setPointSize(20)
 
         text_1 = QtWidgets.QLabel(" Rover ", self)
-        text_1.setGeometry(QtCore.QRect(1380, 340, 60, 40))
+        text_1.setGeometry(QtCore.QRect(1380, 340, 150, 40))
         text_1.setFont(font)
-        text_1.setStyleSheet("background-color: SlateGray;")
+        text_1.setStyleSheet("color: White;")
 
         self.Rover = QtWidgets.QComboBox(self)
         self.Rover.setGeometry(QtCore.QRect(1540, 340, 200, 40))
         self.Rover.addItems(["Curiosity", "Opportunity", "Spirit"])
 
         text_2 = QtWidgets.QLabel(" Solar Year", self)
-        text_2.setGeometry(QtCore.QRect(1380, 400, 100, 40))
+        text_2.setGeometry(QtCore.QRect(1380, 400, 150, 40))
         text_2.setFont(font)
-        text_2.setStyleSheet("background-color: SlateGray;")
+        text_2.setStyleSheet("color: White;")
 
         self.Sol = QtWidgets.QLineEdit(self)
         self.Sol.setGeometry(QtCore.QRect(1540, 400, 200, 40))
 
         text_3 = QtWidgets.QLabel(" Camera ", self)
-        text_3.setGeometry(QtCore.QRect(1380, 460, 80, 40))
+        text_3.setGeometry(QtCore.QRect(1380, 460, 150, 40))
         text_3.setFont(font)
-        text_3.setStyleSheet("background-color: SlateGray;")
+        text_3.setStyleSheet("color: White;")
         
         self.Rover_cam = QtWidgets.QComboBox(self)
         self.Rover_cam.setGeometry(QtCore.QRect(1540, 460, 200, 40))
         self.Rover_cam.addItems(["FHAZ","RHAZ","MAST","CHEMCAM","MAHLI","MARDI","NAVCAM","PANCAM","MINITES"])
 
         text_4 = QtWidgets.QLabel(" Earth Date", self)
-        text_4.setGeometry(QtCore.QRect(1380, 520, 110, 40))
+        text_4.setGeometry(QtCore.QRect(1380, 520, 150, 40))
         text_4.setFont(font)
-        text_4.setStyleSheet("background-color: SlateGray;")
+        text_4.setStyleSheet("color: White;")
 
         self.Earth_Date = QtWidgets.QLineEdit(self)
         self.Earth_Date.setGeometry(QtCore.QRect(1540, 520, 200, 40))
         self.Earth_Date.setText("yyyy-m-d")
         
         fetchButton=QtWidgets.QPushButton('Fetch',self)
-        fetchButton.setGeometry(QtCore.QRect(1380,570,360,40))
-        fetchButton.setStyleSheet("font-size: 20px;background-color: SlateGray;")
+        fetchButton.setGeometry(QtCore.QRect(1500,570,120,40))
+        
+        fetchButton.setStyleSheet("""
+        background-color: rgba(255,255,255,0);
+        color: white;
+        font-size: 25px;
+        border-radius: 5px;
+        border: 2px solid #EC2D01;
+        """)
         fetchButton.clicked.connect(self.fetchData)
 
     def fetchData(self):
@@ -76,24 +84,31 @@ class MainWindow(QtWidgets.QMainWindow):
         if not date:
             date="2015-6-3"
 
-        urldata=requests.get(f"https://api.nasa.gov/mars-photos/api/v1/rovers/{rover}/photos?sol={sol}&camera={camera}&eartg_date={date}&api_key={apitoken}")
+        urldata=requests.get(f"https://api.nasa.gov/mars-photos/api/v1/rovers/{rover.lower()}/photos?sol={sol}&camera={camera.lower()}&earth_date={date}&api_key={apitoken}")
         data=urldata.json()
         photo=data['photos']
         images=[]
-        print("User input:", rover,sol,camera,date)
-        print("Fetching Data")
+        print("\nUser input:", rover,sol,camera,date)
+        print("\nFetching Data")
+        print("\nNumber of photos = ",len(photo))
+        print()
+        c=1
         for i in range(len(photo)):
             image_url=photo[i]['img_src']
-            with open(f"image{i}.jpg","wb") as f:
+            with open(f"img/image{i}.jpg","wb") as f:
                 resp=requests.get(image_url,stream=True)
                 shutil.copyfileobj(resp.raw,f)
-                images.append(f"image{i}.jpg")
+                images.append(f"img/image{i}.jpg")
+                print("URL of image :\n ",image_url)
                 print("Downloaded Image succcessfully")
+                print()
+            if c==20:
+                break
+            c+=1
+
         self.image_window = ImageWindow(images)
         self.image_window.setGeometry(QtCore.QRect(300, 100, 600, 400))
-
         self.image_window.show()
-
 
 class ImageWindow(QtWidgets.QMainWindow):
     def __init__(self, images):
@@ -199,6 +214,7 @@ class EmailInputDialog(QtWidgets.QDialog,):
         msg.setIcon(QtWidgets.QMessageBox.Information)
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
         msg.exec_()
+        shutil.rmtree('img')
         print("Email sent successfully!")
 
         self.close()
