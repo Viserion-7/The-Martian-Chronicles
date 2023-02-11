@@ -4,8 +4,8 @@ import shutil
 from PyQt5 import QtCore, QtWidgets, QtGui
 import ezgmail
 import os
+import cred
 
-apitoken="cGgrQ050dAIbAd2T19ysIRWzvLumwMvcmoCt2w82"
 os.makedirs('img',exist_ok=True)
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
@@ -69,7 +69,7 @@ class MainWindow(QtWidgets.QMainWindow):
         fetchButton.clicked.connect(self.fetchData)
 
     def fetchData(self):
-
+        print("\nFetching Data")
         rover = self.Rover.currentText()
         sol = self.Sol.text()
         camera = self.Rover_cam.currentText()
@@ -81,15 +81,14 @@ class MainWindow(QtWidgets.QMainWindow):
             sol="1000"
         if not camera:
             camera="fhaz"
-        if not date:
+        if date == 'yyyy-m-d':
             date="2015-6-3"
 
-        urldata=requests.get(f"https://api.nasa.gov/mars-photos/api/v1/rovers/{rover.lower()}/photos?sol={sol}&camera={camera.lower()}&earth_date={date}&api_key={apitoken}")
+        urldata=requests.get(f"https://api.nasa.gov/mars-photos/api/v1/rovers/{rover.lower()}/photos?sol={sol}&camera={camera.lower()}&earth_date={date}&api_key={cred.apitoken}")
         data=urldata.json()
         photo=data['photos']
         images=[]
         print("\nUser input:", rover,sol,camera,date)
-        print("\nFetching Data")
         print("\nNumber of photos = ",len(photo))
         print()
         c=1
@@ -100,7 +99,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 shutil.copyfileobj(resp.raw,f)
                 images.append(f"img/image{i}.jpg")
                 print("URL of image :\n ",image_url)
-                print("Downloaded Image succcessfully")
+                print("Downloaded Image successfully")
                 print()
             if c==20:
                 break
@@ -168,9 +167,8 @@ class ImageWindow(QtWidgets.QMainWindow):
 class EmailInputDialog(QtWidgets.QDialog,):
     def __init__(self, images):
         super().__init__()
-
+        print("Sending Mail")
         self.images = images
-
         self.setWindowTitle("Send Email")
 
         self.email_label = QtWidgets.QLabel("Email:", self)
