@@ -163,7 +163,6 @@ class ImageWindow(QtWidgets.QMainWindow):
         email_dialog = EmailInputDialog(self.images)
         email_dialog.exec_()
 
-
 class EmailInputDialog(QtWidgets.QDialog,):
     def __init__(self, images):
         super().__init__()
